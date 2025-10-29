@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,7 +38,6 @@ public class MiniMapStaticMapTexture : MonoBehaviour
     private ZoomLevel zoomLevel;
     public float ImageSize;
 
-    // 插值速度与地图偏移系数（与原逻辑一致：Lerp * 5，地图中心偏移 -scaledPos / 2）
     [SerializeField]
     private float lerpSpeed = 5.0f;
     private const float MapOffsetFactor = 0.5f;
@@ -59,11 +59,22 @@ public class MiniMapStaticMapTexture : MonoBehaviour
         if (!ValidateReferences()) return;
         zoomLevel = ZoomLevel.LevelP1;
 
-        // 与原逻辑保持一致的参数赋值
-        scaleRateX = 9.0f;
-        scaleRateY = 16.0f;
-        currentCamAspect = 1.78f;
-        ImageSize = 512f;
+        // 从 mapConfig.json 读取参数（读取失败则回落到默认值）
+        if (!TryLoadMapConfig(out var cfg))
+        {
+            Debug.LogWarning("MiniMapStaticMapTexture: 读取 mapConfig.json 失败，使用默认参数。");
+            scaleRateX = 9.0f;
+            scaleRateY = 16.0f;
+            currentCamAspect = 1.78f;
+            ImageSize = 512f;
+        }
+        else
+        {
+            scaleRateX = cfg.ppmX;
+            scaleRateY = cfg.ppmY;
+            currentCamAspect = cfg.aspect;
+            ImageSize = cfg.capSize;
+        }
 
         InitializePlayerIcon();
         CacheRectTransforms();
@@ -167,6 +178,35 @@ public class MiniMapStaticMapTexture : MonoBehaviour
             buttonZoomOut.onClick.RemoveAllListeners();
         }
         return true;
+    }
+
+    private bool TryLoadMapConfig(out MiniMapConfig cfg)
+    {
+        cfg = null;
+        try
+        {
+            string baseDir = System.Environment.CurrentDirectory;
+            string cfgPath = Path.Combine(baseDir, "PMSTemp", "MapPath", "mapConfig.json");
+            if (!File.Exists(cfgPath))
+            {
+                Debug.LogWarning($"MiniMapStaticMapTexture: 未找到配置文件: {cfgPath}");
+                return false;
+            }
+
+            string json = File.ReadAllText(cfgPath);
+            cfg = JsonUtility.FromJson<MiniMapConfig>(json);
+            if (cfg == null)
+            {
+                Debug.LogWarning("MiniMapStaticMapTexture: mapConfig.json 解析失败。");
+                return false;
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"MiniMapStaticMapTexture: 读取配置失败: {ex.Message}");
+            return false;
+        }
     }
 
     private void InitializePlayerIcon()
