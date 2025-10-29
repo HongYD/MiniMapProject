@@ -103,12 +103,13 @@ public class MiniMapStaticMapTexture : MonoBehaviour
 
         // 初始位置与小地图偏移
         Vector2 scaledPos = GetScaledPlayerPos();
+        Vector2 scaledMapPos = GetScaledMapPos();
         isOverDeadZone = IsBeyondDeadZone(scaledPos);
 
         if (isOverDeadZone)
         {
-            miniMapRect.anchoredPosition = (-scaledPos * MapOffsetFactor);
             playerIconRect.anchoredPosition = scaledPos;
+            miniMapRect.anchoredPosition = scaledMapPos;          
         }
         else
         {
@@ -224,8 +225,11 @@ public class MiniMapStaticMapTexture : MonoBehaviour
 
     private Vector2 GetScaledPlayerPos()
     {
+        //计算当前地图缩放等级
         float zoomFactor = ((int)zoomLevel) / 100f;
+        //计算玩家相对于原点的世界坐标偏移
         Vector2 deltaPos = (playerObj.transform.position - originPos).ToVector2();
+        //根据当前地图参数提供的信息（即当前地图下世界坐标的一单位相当于图片上的几像素），以及相机宽高比，以及作坊等级，计算玩家在小地图上的位置
         return new Vector2(deltaPos.x * scaleRateX * currentCamAspect * zoomFactor, deltaPos.y * scaleRateY * zoomFactor);
     }
 
@@ -239,11 +243,17 @@ public class MiniMapStaticMapTexture : MonoBehaviour
             new Vector2(cameraForward.x, cameraForward.z)
         );
 
+        //先算出玩家在小地图上的位置
         float zoomFactor = ((int)zoomLevel) / 100f;
         Vector2 deltaPos = (playerObj.transform.position - originPos).ToVector2();
         Vector2 scaledPos = new Vector2(deltaPos.x * scaleRateX * currentCamAspect * zoomFactor, deltaPos.y * scaleRateY * zoomFactor);
 
         // 将 mapPos 旋转 angleY（角度制）
+        // 二维旋转矩阵：
+        /*
+         * |x'|   | cosθ  -sinθ |   |x|
+         * |y'| = | sinθ  cosθ  | * |y|
+         */
         float rad = angleY * Mathf.Deg2Rad;
         float cos = Mathf.Cos(rad);
         float sin = Mathf.Sin(rad);
@@ -251,6 +261,7 @@ public class MiniMapStaticMapTexture : MonoBehaviour
             scaledPos.x * cos - scaledPos.y * sin,
             scaledPos.x * sin + scaledPos.y * cos
         );
+        //地图需要向反方向移动
         return -scaledPos;
     }
 
@@ -262,6 +273,7 @@ public class MiniMapStaticMapTexture : MonoBehaviour
 
     private void UpdatePlayerIconRotation()
     {
+        //玩家图标的旋转 = 相机旋转 + 玩家自身旋转
         Vector3 worldForward = Vector3.forward;
         Vector3 cameraForward = Camera.main.transform.forward;
         float angleY = Vector2.SignedAngle(
@@ -279,6 +291,7 @@ public class MiniMapStaticMapTexture : MonoBehaviour
 
     private void UpdateMinimapImageRotation()
     {
+        //小地图图像的旋转 = 相机旋转
         Vector3 worldForward = Vector3.forward;
         Vector3 cameraForward = Camera.main.transform.forward;
 
