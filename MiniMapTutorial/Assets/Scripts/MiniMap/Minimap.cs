@@ -93,12 +93,12 @@ public class Minimap : MonoBehaviour
 
             // 玩家与物体的距离（当前用三维距离，包含 view.z）
             // 如果只需平面距离更稳定，可改为：float distToPlayer = new Vector2(relativePosViewport.x, relativePosViewport.y).magnitude
-            // //•	之所以是“以 +y 轴为零度”，是因为你调用了 Mathf.Atan2(relativePosViewport.x, relativePosViewport.y)，即把 x 当作第1参(y)、y 当作第2参(x)。这样对于向上向量 (0,1) 得到 0°，零度轴就在 +y。
-            //也就是说relativePosViewport这个坐标空间就是以+y为零度的，逆时针为正角的空间
+            // //•	之所以是“以 +y 轴为零度”，是因为你调用了 Mathf.Atan2(relativePosViewport.x, relativePosViewport.y)，即把 x 当作第1参(y)、y 当作第2参(x)。这样对于向上向量 (0,1) 得到 0°，零度轴就在 +y。           
             float distToPlayer = Vector3.Distance(viewportPlayerPos, viewportPos);
 
             //角度对齐：
             // φy = atan2(x, y)（以 +y轴为零度、逆时针为正的角度）；
+            //也就是说relativePosViewport这个坐标空间就是以+y为零度的，逆时针为正角的空间
             // 将 φy 转成以 +x 为零度的角并与主相机偏航对齐：δ = yaw - φy +90°。
             float deltaY = Camera.main.transform.eulerAngles.y - Mathf.Atan2(relativePosViewport.x, relativePosViewport.y) * Mathf.Rad2Deg +90.0f;
 
