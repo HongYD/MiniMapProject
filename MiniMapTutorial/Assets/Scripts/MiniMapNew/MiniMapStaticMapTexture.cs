@@ -20,6 +20,7 @@ public enum ZoomLevel
     LevelP2 = 200,  // 2
 }
 
+
 public class MiniMapStaticMapTexture : MonoBehaviour
 {
     [SerializeField]
